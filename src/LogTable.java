@@ -41,6 +41,7 @@ public class LogTable extends JTable implements FocusListener, ActionListener
     String                                m_strTagRemove;
     String                                m_strFilterRemove;
     String                                m_strFilterFind;
+    String                                mFixedStrPidShow;
     float                                 m_fFontSize;
     boolean                               m_bAltPressed;
     int                                   m_nTagLength;
@@ -199,6 +200,10 @@ public class LogTable extends JTable implements FocusListener, ActionListener
         return m_strTidShow;
     }
 
+    String getFixedFilterShowPid(){
+        return mFixedStrPidShow;
+    }
+    
     String GetFilterShowTag()
     {
         return m_strTagShow;
@@ -437,8 +442,13 @@ public class LogTable extends JTable implements FocusListener, ActionListener
     void SetFilterShowPid(String strShowPid)
     {
         m_strPidShow = strShowPid;
+        mFixedStrPidShow = strShowPid;
     }
 
+    void setFixedFilterShowPid(String strShowPid){
+        mFixedStrPidShow = strShowPid;
+    }
+    
     void SetFilterShowTid(String strShowTid)
     {
         m_strTidShow = strShowTid;

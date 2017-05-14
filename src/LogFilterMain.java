@@ -31,6 +31,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -856,7 +857,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
 
         JPanel jpPid = new JPanel(new BorderLayout());
         JLabel pid = new JLabel();
-        pid.setText("         Pid : ");
+        pid.setText(" Pid/Pkg : ");
         jpPid.add(pid, BorderLayout.WEST);
         jpPid.add(m_tfShowPid, BorderLayout.CENTER);
         jpPid.add(m_chkEnableShowPid, BorderLayout.EAST);
@@ -1680,9 +1681,61 @@ public class LogFilterMain extends JFrame implements INotiEvent
         });
         m_thFilterParse.start();
     }
+    
+    void updateFilterPidShow(){
+		String str = m_tbLogTable.GetFilterShowPid();
+		m_tbLogTable.setFixedFilterShowPid(str);
+		if (str == null || !str.contains(".")){
+			return;
+		}
+		final List<String> pkgs = new ArrayList<String>();
+		for (String s : str.split("\\|")){
+			if (s.contains(".")){
+				pkgs.add(s);
+			}
+		}
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				Process process = null;
+				BufferedReader br = null;
+				try {
+					process = Runtime.getRuntime().exec("adb shell ps");
+					br = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
+					String line;
+					String result = m_tbLogTable.GetFilterShowPid();
+					while((line=br.readLine()) != null) {
+					    String[] results = line.replaceAll("\\s+"," ").split(" ");
+					    for (String s: pkgs){
+						    if (results[results.length -1].trim().equalsIgnoreCase(s)){
+						    	result = result + "|" + results[1];
+						        break;
+						    }	
+					    }
+					}
+					m_tbLogTable.setFixedFilterShowPid(result);
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally{
+						try {
+							if (br != null){
+							    br.close();
+							}
+							if (process != null){
+							    process.destroy();	
+							}
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+			}
+		}).run();
+    }
 
     void startProcess()
     {
+        updateFilterPidShow();
         clearData();
         m_tbLogTable.clearSelection();
         m_thProcess = new Thread(new Runnable()
@@ -1755,7 +1808,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     {
         if(m_tbLogTable.GetFilterShowPid().length() <= 0) return true;
 
-        StringTokenizer stk = new StringTokenizer(m_tbLogTable.GetFilterShowPid(), "|", false);
+        StringTokenizer stk = new StringTokenizer(m_tbLogTable.getFixedFilterShowPid(), "|", false);
 
         while(stk.hasMoreElements())
         {
